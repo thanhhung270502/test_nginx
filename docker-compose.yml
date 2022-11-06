@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: test_nginx
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./tmp/db:/var/lib/mysql/data
+  app:
+    build:
+      context: .
+      dockerfile: ./app.Dockerfile
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec puma -C config/puma.rb"
+    volumes:
+      - .:/app
+    depends_on:
+      - mysql
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx.Dockerfile
+    depends_on:
+      - app
+    links:
+      - app
+    ports:
+      - 80:80
